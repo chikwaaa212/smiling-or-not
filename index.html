@@ -1,141 +1,174 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Smile Detection System</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smile Detection System</title>
 
-    <style>
+<script defer src="https://unpkg.com/face-api.js"></script>
 
-        body{
-            font-family: Arial;
-            background:#f4f4f4;
-            display:flex;
-            justify-content:center;
-            align-items:center;
-            height:100vh;
-        }
-
-        .container{
-            background:white;
-            padding:30px;
-            border-radius:10px;
-            width:350px;
-            text-align:center;
-        }
-
-        .preview{
-            width:100%;
-            margin-top:20px;
-            display:none;
-        }
-
-        button{
-            margin-top:20px;
-            padding:10px;
-            width:100%;
-            border:none;
-            background:blue;
-            color:white;
-            border-radius:5px;
-            cursor:pointer;
-        }
-
-        #result{
-            margin-top:20px;
-            font-size:20px;
-            font-weight:bold;
-        }
-
-    </style>
-
+<style>
+body{
+    margin:0;
+    font-family:Arial, sans-serif;
+    background:linear-gradient(135deg,#dbeafe,#eff6ff);
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+.container{
+    background:white;
+    width:380px;
+    padding:30px;
+    border-radius:20px;
+    text-align:center;
+    box-shadow:0 10px 25px rgba(0,0,0,0.15);
+}
+h1{
+    color:#1e3a8a;
+}
+p{
+    color:#555;
+    font-size:14px;
+}
+.upload-box{
+    border:2px dashed #3b82f6;
+    padding:20px;
+    border-radius:15px;
+    display:block;
+    cursor:pointer;
+    color:#2563eb;
+    margin:20px 0;
+}
+.upload-box:hover{
+    background:#eff6ff;
+}
+#imageInput{
+    display:none;
+}
+#preview{
+    width:100%;
+    max-height:280px;
+    object-fit:cover;
+    border-radius:15px;
+    display:none;
+    margin-bottom:15px;
+}
+button{
+    width:100%;
+    padding:13px;
+    border:none;
+    border-radius:12px;
+    background:#2563eb;
+    color:white;
+    font-size:16px;
+    cursor:pointer;
+}
+button:hover{
+    background:#1d4ed8;
+}
+#result{
+    margin-top:18px;
+    font-size:20px;
+    font-weight:bold;
+}
+.loading{
+    color:#777;
+    font-size:13px;
+}
+</style>
 </head>
 
 <body>
 
 <div class="container">
+    <h1>Smile Detection System</h1>
+    <p>Upload a face image and the system will detect if the person is smiling or not.</p>
 
-    <h1>Smile Detection</h1>
+    <div id="status" class="loading">Loading AI model...</div>
 
-    <input type="file" id="imageInput">
+    <label class="upload-box">
+        Click to Upload Image
+        <input type="file" id="imageInput" accept="image/*">
+    </label>
 
-    <img id="preview" class="preview">
+    <img id="preview">
 
-    <button type="button" id="detectBtn">
-        Detect Smile
-    </button>
+    <button type="button" id="detectBtn">Detect Smile</button>
 
     <div id="result"></div>
-
 </div>
 
 <script>
+const imageInput = document.getElementById("imageInput");
+const preview = document.getElementById("preview");
+const detectBtn = document.getElementById("detectBtn");
+const result = document.getElementById("result");
+const statusText = document.getElementById("status");
 
-const imageInput =
-document.getElementById("imageInput");
+let imageLoaded = false;
 
-const preview =
-document.getElementById("preview");
+window.onload = async function () {
+    await faceapi.nets.tinyFaceDetector.loadFromUri(
+        "https://justadudewhohacks.github.io/face-api.js/models"
+    );
 
-const detectBtn =
-document.getElementById("detectBtn");
+    await faceapi.nets.faceLandmark68Net.loadFromUri(
+        "https://justadudewhohacks.github.io/face-api.js/models"
+    );
 
-const result =
-document.getElementById("result");
+    statusText.innerHTML = "AI model ready ✅";
+};
 
-let uploadedFile = null;
+imageInput.addEventListener("change", function () {
+    const file = this.files[0];
 
-imageInput.addEventListener("change", function(){
-
-    uploadedFile = this.files[0];
-
-    if(uploadedFile){
-
-        const reader = new FileReader();
-
-        reader.onload = function(e){
-
-            preview.src = e.target.result;
-            preview.style.display = "block";
-
-        };
-
-        reader.readAsDataURL(uploadedFile);
-
+    if (file) {
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = "block";
+        result.innerHTML = "";
+        imageLoaded = true;
     }
-
 });
 
-detectBtn.addEventListener("click", function(){
-
-    if(!uploadedFile){
-
-        result.innerHTML =
-        "Please upload image first.";
-
+detectBtn.addEventListener("click", async function () {
+    if (!imageLoaded) {
+        result.innerHTML = "Please upload an image first.";
         return;
     }
 
-    const name =
-    uploadedFile.name.toLowerCase();
+    result.innerHTML = "Analyzing image...";
 
-    if(
-        name.includes("smile") ||
-        name.includes("happy")
-    ){
+    const detection = await faceapi
+        .detectSingleFace(preview, new faceapi.TinyFaceDetectorOptions())
+        .withFaceLandmarks();
 
-        result.innerHTML =
-        "Prediction: Smiling 😊";
-
+    if (!detection) {
+        result.innerHTML = "No face detected. Please upload a clear face image.";
+        return;
     }
 
-    else{
+    const mouth = detection.landmarks.getMouth();
 
-        result.innerHTML =
-        "Prediction: Not Smiling 😐";
+    const leftMouth = mouth[0];
+    const rightMouth = mouth[6];
+    const topLip = mouth[13];
+    const bottomLip = mouth[19];
 
+    const mouthWidth = Math.abs(rightMouth.x - leftMouth.x);
+    const mouthHeight = Math.abs(bottomLip.y - topLip.y);
+
+    const smileRatio = mouthWidth / mouthHeight;
+
+    if (smileRatio > 3.2) {
+        result.innerHTML = "Prediction: Smiling 😊";
+        result.style.color = "#16a34a";
+    } else {
+        result.innerHTML = "Prediction: Not Smiling 😐";
+        result.style.color = "#dc2626";
     }
-
 });
-
 </script>
 
 </body>
