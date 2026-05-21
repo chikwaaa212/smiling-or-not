@@ -1,0 +1,12 @@
+{
+  "functions": {
+    "api/predict.py": {
+      "runtime": "python3.10",
+      "maxDuration": 30
+    }
+  },
+  "routes": [
+    { "src": "/api/predict", "dest": "/api/predict.py" },
+    { "src": "/(.*)", "dest": "/public/index.html" }
+  ]
+}

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smile Detection System</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Smile Detection System</h1>
+    <p>Upload a face image to detect if the person is smiling or not.</p>
+
+    <label class="upload-box">
+      <input type="file" id="imageInput" accept="image/*" required />
+      <span>Click to upload image</span>
+    </label>
+
+    <img id="preview" class="preview" alt="Image preview" />
+    <button id="detectBtn">Detect Smile</button>
+    <div id="result" class="result-box hidden"></div>
+  </div>
+
+<script>
+const imageInput = document.getElementById('imageInput');
+const preview = document.getElementById('preview');
+const detectBtn = document.getElementById('detectBtn');
+const result = document.getElementById('result');
+let base64Image = '';
+
+imageInput.addEventListener('change', () => {
+  const file = imageInput.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    base64Image = reader.result;
+    preview.src = base64Image;
+    preview.style.display = 'block';
+    result.classList.add('hidden');
+  };
+  reader.readAsDataURL(file);
+});
+
+detectBtn.addEventListener('click', async () => {
+  if (!base64Image) {
+    result.textContent = 'Please upload an image first.';
+    result.classList.remove('hidden');
+    return;
+  }
+
+  detectBtn.disabled = true;
+  detectBtn.textContent = 'Detecting...';
+  result.textContent = 'Please wait...';
+  result.classList.remove('hidden');
+
+  try {
+    const res = await fetch('/api/predict', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: base64Image })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Prediction failed');
+    result.innerHTML = `<h2>${data.label}</h2><p>Confidence score: ${data.score.toFixed(4)}</p>`;
+  } catch (err) {
+    result.textContent = 'Error: ' + err.message;
+  } finally {
+    detectBtn.disabled = false;
+    detectBtn.textContent = 'Detect Smile';
+  }
+});
+</script>
+</body>
+</html>
