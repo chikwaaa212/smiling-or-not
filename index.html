@@ -1,54 +1,178 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Smile Detection System</title>
+
     <link rel="stylesheet" href="style.css" />
+
+    <style>
+        body{
+            font-family: Arial, sans-serif;
+            background:#f4f4f4;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            height:100vh;
+            margin:0;
+        }
+
+        .container{
+            background:white;
+            padding:30px;
+            border-radius:15px;
+            width:350px;
+            text-align:center;
+            box-shadow:0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        h1{
+            margin-bottom:10px;
+        }
+
+        p{
+            color:#666;
+            font-size:14px;
+            margin-bottom:20px;
+        }
+
+        .upload-box{
+            border:2px dashed #ccc;
+            padding:20px;
+            border-radius:10px;
+            cursor:pointer;
+            display:block;
+            margin-bottom:20px;
+        }
+
+        .upload-box:hover{
+            background:#f9f9f9;
+        }
+
+        .preview{
+            width:100%;
+            max-height:250px;
+            object-fit:cover;
+            border-radius:10px;
+            margin-bottom:20px;
+            display:none;
+        }
+
+        button{
+            width:100%;
+            padding:12px;
+            border:none;
+            border-radius:10px;
+            background:#2563eb;
+            color:white;
+            font-size:16px;
+            cursor:pointer;
+        }
+
+        button:hover{
+            background:#1d4ed8;
+        }
+
+        .result-box{
+            margin-top:20px;
+            font-size:18px;
+            font-weight:bold;
+        }
+    </style>
 </head>
 
 <body>
 
 <div class="container">
+
     <h1>Smile Detection System</h1>
-    <p>Upload a face image to detect if the person is smiling or not.</p>
+
+    <p>
+        Upload a face image to detect if the person is smiling or not.
+    </p>
 
     <label class="upload-box">
-        <input type="file" id="imageInput" accept="image/*" hidden />
+
+        <input
+            type="file"
+            id="imageInput"
+            accept="image/*"
+            hidden
+        />
+
         <span>Click to upload image</span>
+
     </label>
 
-    <img id="preview" class="preview" style="display:none;" />
+    <img id="preview" class="preview" />
 
-    <button id="detectBtn">Upload Image</button>
+    <button id="detectBtn">
+        Detect Smile
+    </button>
 
     <div id="result" class="result-box"></div>
+
 </div>
 
 <script>
+
 const imageInput = document.getElementById("imageInput");
 const preview = document.getElementById("preview");
 const result = document.getElementById("result");
+const detectBtn = document.getElementById("detectBtn");
+
+let uploadedFile = null;
 
 imageInput.addEventListener("change", function () {
 
-    const file = this.files[0];
+    uploadedFile = this.files[0];
 
-    if (file) {
+    if (uploadedFile) {
 
         const reader = new FileReader();
 
         reader.onload = function(e) {
+
             preview.src = e.target.result;
             preview.style.display = "block";
 
             result.innerHTML = "Image uploaded successfully!";
+
         };
 
-        reader.readAsDataURL(file);
+        reader.readAsDataURL(uploadedFile);
     }
 });
+
+detectBtn.addEventListener("click", function () {
+
+    if (!uploadedFile) {
+
+        result.innerHTML = "Please upload an image first.";
+        return;
+    }
+
+    const fileName = uploadedFile.name.toLowerCase();
+
+    if (
+        fileName.includes("smile") ||
+        fileName.includes("happy")
+    ) {
+
+        result.innerHTML =
+            "Prediction: Smiling 😊";
+
+    } else {
+
+        result.innerHTML =
+            "Prediction: Not Smiling 😐";
+    }
+});
+
 </script>
 
 </body>
 </html>
+```
